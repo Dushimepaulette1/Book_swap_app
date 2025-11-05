@@ -14,7 +14,7 @@ class AuthService {
     );
   }
 
-  Future<UserCredential> logIn({
+  Future<UserCredential> signIn({
     required String email,
     required String password,
   }) async {

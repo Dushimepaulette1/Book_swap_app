@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'screens/welcome_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(BookSwap());
+  runApp(const BookSwap());
 }
 
 class BookSwap extends StatelessWidget {
@@ -13,6 +14,14 @@ class BookSwap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("Book Swap App")));
+    return MaterialApp(
+      title: 'BookSwap',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: const Color(0xFF2C2855),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2C2855)),
+      ),
+      home: const WelcomeScreen(), 
+    );
   }
 }
