@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image/image.dart' as img;
+import 'package:provider/provider.dart';
 import '../models/book.dart';
-import '../services/firestore_service.dart';
+import '../providers/book_provider.dart';
 
 /// Screen to edit an existing book listing
 class EditBookScreen extends StatefulWidget {
@@ -27,7 +28,6 @@ class _EditBookScreenState extends State<EditBookScreen> {
   late TextEditingController _swapForController;
 
   // Services
-  final FirestoreService _firestoreService = FirestoreService();
   final ImagePicker _imagePicker = ImagePicker();
 
   // State variables
@@ -236,8 +236,8 @@ class _EditBookScreenState extends State<EditBookScreen> {
         imageUrl = _getDefaultBookCover(_titleController.text.trim());
       }
 
-      // Update book in Firestore
-      await _firestoreService.updateBook(
+      // Update book in Firestore using Provider
+      await context.read<BookProvider>().updateBook(
         bookId: widget.book.id,
         updates: {
           'title': _titleController.text.trim(),
@@ -373,7 +373,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.star),
               ),
-              items: ['New', 'Like New', 'Good', 'Fair'].map((condition) {
+              items: ['New', 'Like New', 'Good', 'Used'].map((condition) {
                 return DropdownMenuItem(
                   value: condition,
                   child: Text(condition),

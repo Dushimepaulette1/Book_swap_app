@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'homepage.dart';
 import 'login_page.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -85,20 +84,70 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
 
     try {
-      // Calling Firebase to create an account
+      // Calling Firebase to create an account and send verification email
       await _authService.signUp(email: email, password: password);
 
-      // if successful, Navigate to homepage
+      // Sign them out immediately so they can't use the app without verification
+      await _authService.signOut();
+
+      // Show success message with verification instructions
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created successfully!'),
-            backgroundColor: Colors.green,
+        // Show dialog instead of snackbar for important message
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.mark_email_read, color: Color(0xFF2C2855)),
+                SizedBox(width: 8),
+                Text('Verify Your Email'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Account created successfully!',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Text('We\'ve sent a verification email to:'),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C2855),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Please check your inbox and click the verification link before logging in.',
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Note: Check your spam folder if you don\'t see the email.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Go back to login
+                },
+                child: const Text('OK, Got it!'),
+              ),
+            ],
           ),
         );
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (_) => const Homepage()));
       }
     } catch (e) {
       String errorMessage = 'Sign up failed';
