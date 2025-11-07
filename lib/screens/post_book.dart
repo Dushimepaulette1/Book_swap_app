@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:desktop_drop/desktop_drop.dart';
+import 'package:file_picker/file_picker.dart';
 import '../services/firestore_service.dart';
 import '../services/storage_service.dart';
 
@@ -35,6 +37,7 @@ class _PostBookScreenState extends State<PostBookScreen> {
   String _selectedCondition = 'New'; // Default condition
   File? _selectedImage; // Stores the picked image
   bool _isLoading = false;
+  bool _isDragging = false; // Track if user is dragging over the drop zone
 
   // Condition options
   final List<String> _conditions = ['New', 'Like New', 'Good', 'Used'];
@@ -47,12 +50,85 @@ class _PostBookScreenState extends State<PostBookScreen> {
     super.dispose();
   }
 
-  /// Pick image from gallery
-  Future<void> _pickImage() async {
+  /// Show bottom sheet with image source options
+  Future<void> _showImageSourceOptions() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Choose Image Source',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+
+                // Camera option
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    color: Color(0xFF2C2855),
+                  ),
+                  title: const Text('Camera'),
+                  subtitle: const Text('Take a photo'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImageFromSource(ImageSource.camera);
+                  },
+                ),
+
+                const Divider(),
+
+                // Gallery option
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library,
+                    color: Color(0xFF2C2855),
+                  ),
+                  title: const Text('Gallery'),
+                  subtitle: const Text('Choose from photos'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImageFromSource(ImageSource.gallery);
+                  },
+                ),
+
+                const Divider(),
+
+                // File Browser option
+                ListTile(
+                  leading: const Icon(
+                    Icons.folder_open,
+                    color: Color(0xFF2C2855),
+                  ),
+                  title: const Text('Files'),
+                  subtitle: const Text('Browse all files (Downloads, etc.)'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImageFromFiles();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Pick image from specific source
+  Future<void> _pickImageFromSource(ImageSource source) async {
     try {
-      // Use ImagePicker to get image from gallery
+      // Use ImagePicker to get image
       final XFile? pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery, // Can also use ImageSource.camera
+        source: source,
         maxWidth: 1000, // Limit image size
         maxHeight: 1000,
         imageQuality: 85, // Compress to 85% quality
@@ -70,6 +146,47 @@ class _PostBookScreenState extends State<PostBookScreen> {
         ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
       }
     }
+  }
+
+  /// Pick image using file picker (can access Downloads, Documents, etc.)
+  Future<void> _pickImageFromFiles() async {
+    try {
+      // Use FilePicker - it uses Android's SAF (Storage Access Framework)
+      // which doesn't require runtime permissions!
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'],
+        allowMultiple: false,
+        allowCompression: true,
+        dialogTitle: 'Select Book Cover Image',
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _selectedImage = File(result.files.single.path!);
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image selected successfully!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick file: $e')));
+      }
+    }
+  }
+
+  /// Pick image from gallery (backward compatibility)
+  Future<void> _pickImage() async {
+    await _showImageSourceOptions();
   }
 
   /// Remove selected image
@@ -95,9 +212,32 @@ class _PostBookScreenState extends State<PostBookScreen> {
 
       // Step 1: Upload image if selected
       if (_selectedImage != null) {
-        print('📸 Uploading image...');
-        imageUrl = await _storageService.uploadBookImage(_selectedImage!);
-        print('✅ Image uploaded: $imageUrl');
+        try {
+          print('📸 Uploading image...');
+          imageUrl = await _storageService.uploadBookImage(_selectedImage!);
+          print('✅ Image uploaded: $imageUrl');
+        } catch (storageError) {
+          print('⚠️ Storage upload failed: $storageError');
+          // Use placeholder image if storage upload fails
+          imageUrl =
+              'https://via.placeholder.com/400x600/2C2855/FFFFFF?text=Book+Cover';
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Note: Using placeholder image (Firebase Storage not enabled)',
+                ),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      } else {
+        // No image selected - use placeholder
+        imageUrl =
+            'https://via.placeholder.com/400x600/2C2855/FFFFFF?text=No+Image';
       }
 
       // Step 2: Add book to Firestore with image URL
@@ -107,7 +247,7 @@ class _PostBookScreenState extends State<PostBookScreen> {
         author: _authorController.text.trim(),
         condition: _selectedCondition,
         swapFor: _swapForController.text.trim(),
-        imageUrl: imageUrl, // Can be null if no image selected
+        imageUrl: imageUrl,
       );
       print('✅ Book added successfully!');
 
@@ -171,60 +311,126 @@ class _PostBookScreenState extends State<PostBookScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Image picker section
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[400]!),
-                        ),
-                        child: _selectedImage == null
-                            ? Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_photo_alternate,
-                                    size: 60,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Tap to add book cover',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 16,
+                    // Image picker section with drag & drop
+                    DropTarget(
+                      onDragDone: (detail) {
+                        // Handle dropped files
+                        if (detail.files.isNotEmpty) {
+                          final file = detail.files.first;
+                          // Check if it's an image
+                          if (file.path.toLowerCase().endsWith('.jpg') ||
+                              file.path.toLowerCase().endsWith('.jpeg') ||
+                              file.path.toLowerCase().endsWith('.png') ||
+                              file.path.toLowerCase().endsWith('.gif')) {
+                            setState(() {
+                              _selectedImage = File(file.path);
+                              _isDragging = false;
+                            });
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please drop an image file (JPG, PNG, GIF)',
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      onDragEntered: (detail) {
+                        setState(() {
+                          _isDragging = true;
+                        });
+                      },
+                      onDragExited: (detail) {
+                        setState(() {
+                          _isDragging = false;
+                        });
+                      },
+                      child: GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: _isDragging
+                                ? Colors.blue[50]
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _isDragging
+                                  ? Colors.blue
+                                  : Colors.grey[400]!,
+                              width: _isDragging ? 2 : 1,
+                            ),
+                          ),
+                          child: _selectedImage == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _isDragging
+                                          ? Icons.file_download
+                                          : Icons.add_photo_alternate,
+                                      size: 60,
+                                      color: _isDragging
+                                          ? Colors.blue
+                                          : Colors.grey[600],
                                     ),
-                                  ),
-                                ],
-                              )
-                            : Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(
-                                      _selectedImage!,
-                                      width: double.infinity,
-                                      height: 200,
-                                      fit: BoxFit.cover,
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _isDragging
+                                          ? 'Drop image here'
+                                          : 'Tap to pick or drag & drop image',
+                                      style: TextStyle(
+                                        color: _isDragging
+                                            ? Colors.blue
+                                            : Colors.grey[600],
+                                        fontSize: 16,
+                                        fontWeight: _isDragging
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                  ),
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: IconButton(
-                                      onPressed: _removeImage,
-                                      icon: const Icon(Icons.close),
-                                      style: IconButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        foregroundColor: Colors.white,
+                                    if (!_isDragging) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Supports: JPG, PNG, GIF',
+                                        style: TextStyle(
+                                          color: Colors.grey[500],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                )
+                              : Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.file(
+                                        _selectedImage!,
+                                        width: double.infinity,
+                                        height: 200,
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: IconButton(
+                                        onPressed: _removeImage,
+                                        icon: const Icon(Icons.close),
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                          foregroundColor: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
                       ),
                     ),
 

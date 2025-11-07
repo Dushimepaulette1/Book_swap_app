@@ -21,6 +21,11 @@ class StorageService {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User not logged in');
 
+      // Verify file exists
+      if (!await imageFile.exists()) {
+        throw Exception('Image file does not exist');
+      }
+
       // Create unique filename using timestamp
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'book_${timestamp}.jpg';
@@ -33,6 +38,8 @@ class StorageService {
           .child(user.uid)
           .child(fileName);
 
+      print('📤 Uploading to: books/${user.uid}/$fileName');
+
       // Upload the file
       // UploadTask tracks upload progress
       final UploadTask uploadTask = storageRef.putFile(imageFile);
@@ -44,7 +51,24 @@ class StorageService {
       // This is the URL we'll save in Firestore
       final String downloadUrl = await snapshot.ref.getDownloadURL();
 
+      print('✅ Upload successful: $downloadUrl');
+
       return downloadUrl;
+    } on FirebaseException catch (e) {
+      // Handle Firebase-specific errors
+      if (e.code == 'storage/object-not-found') {
+        throw Exception(
+          'Firebase Storage not configured. Please enable Storage in Firebase Console.',
+        );
+      } else if (e.code == 'storage/unauthorized') {
+        throw Exception(
+          'Storage access denied. Please update Storage Rules in Firebase Console.',
+        );
+      } else if (e.code == 'storage/canceled') {
+        throw Exception('Upload was canceled.');
+      } else {
+        throw Exception('Firebase Storage error: ${e.message}');
+      }
     } catch (e) {
       throw Exception('Failed to upload image: $e');
     }
