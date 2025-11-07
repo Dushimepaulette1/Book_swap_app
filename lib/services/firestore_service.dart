@@ -55,11 +55,15 @@ class FirestoreService {
   /// Stream continuously listens for changes in Firestore
   Stream<List<Book>> getAllBooks() {
     return _booksCollection
-        .orderBy('createdAt', descending: true) // Newest first
-        .snapshots() // Listen to real-time changes
+        .snapshots() // Listen to real-time changes (no orderBy to avoid index)
         .map((snapshot) {
-          // Convert each document to Book object
-          return snapshot.docs.map((doc) => Book.fromFirestore(doc)).toList();
+          // Convert each document to Book object and sort in memory
+          final books = snapshot.docs.map((doc) => Book.fromFirestore(doc)).toList();
+          
+          // Sort by createdAt in Dart instead of Firestore
+          books.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          
+          return books;
         });
   }
 
@@ -72,10 +76,17 @@ class FirestoreService {
 
     return _booksCollection
         .where('ownerId', isEqualTo: user.uid) // Filter by owner
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) => Book.fromFirestore(doc)).toList();
+          // Convert to list and sort by createdAt in Dart (not Firestore)
+          final books = snapshot.docs
+              .map((doc) => Book.fromFirestore(doc))
+              .toList();
+
+          // Sort in memory instead of using Firestore orderBy
+          books.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          return books;
         });
   }
 
