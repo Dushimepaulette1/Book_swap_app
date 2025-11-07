@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/book.dart';
 import '../services/firestore_service.dart';
 import '../utils/image_helper.dart';
+import 'edit_book_screen.dart';
 
 /// Book Details Screen
 ///
@@ -54,9 +55,11 @@ class BookDetailsScreen extends StatelessWidget {
               ],
               onSelected: (value) {
                 if (value == 'edit') {
-                  // TODO: Navigate to edit screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit feature coming soon!')),
+                  // Navigate to edit screen
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => EditBookScreen(book: book),
+                    ),
                   );
                 } else if (value == 'delete') {
                   _showDeleteConfirmation(context, book);

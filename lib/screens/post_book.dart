@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image/image.dart' as img;
 import '../services/firestore_service.dart';
 
 /// Screen to post a new book listing
@@ -234,19 +235,40 @@ class _PostBookScreenState extends State<PostBookScreen> {
     try {
       String imageUrl;
 
-      // Convert selected image to base64 or use default cover
+      // Compress selected image and convert to base64, or use default cover
       if (_selectedImage != null) {
-        // Read the image file as bytes and convert to base64
+        // Read the image file as bytes
         final bytes = await _selectedImage!.readAsBytes();
-        final base64Image = base64Encode(bytes);
 
-        // Store as data URL (can be displayed in Image.network)
-        imageUrl = 'data:image/jpeg;base64,$base64Image';
+        // Decode image
+        img.Image? image = img.decodeImage(bytes);
+
+        if (image != null) {
+          // Resize image if too large (max 800x800 to stay within Firestore limits)
+          if (image.width > 800 || image.height > 800) {
+            image = img.copyResize(
+              image,
+              width: image.width > image.height ? 800 : null,
+              height: image.height > image.width ? 800 : null,
+            );
+          }
+
+          // Compress image as JPEG with 70% quality
+          final compressedBytes = img.encodeJpg(image, quality: 70);
+
+          // Convert to base64
+          final base64Image = base64Encode(compressedBytes);
+          imageUrl = 'data:image/jpeg;base64,$base64Image';
+        } else {
+          // Fallback if image decode fails
+          final base64Image = base64Encode(bytes);
+          imageUrl = 'data:image/jpeg;base64,$base64Image';
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Image uploaded successfully!'),
+              content: Text('Image compressed and uploaded successfully!'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),

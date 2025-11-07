@@ -7,6 +7,7 @@ import '../utils/image_helper.dart';
 import 'welcome_screen.dart';
 import 'post_book.dart';
 import 'book_details_screen.dart';
+import 'edit_book_screen.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -508,14 +509,14 @@ class _MyBookCard extends StatelessWidget {
                 ],
                 onSelected: (value) {
                   if (value == 'edit') {
-                    // TODO: Navigate to edit screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Edit feature coming soon!'),
+                    // Navigate to edit screen
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => EditBookScreen(book: book),
                       ),
                     );
                   } else if (value == 'delete') {
-                    // TODO: Show delete confirmation
+                    // Show delete confirmation
                     _showDeleteConfirmation(context, book);
                   }
                 },
