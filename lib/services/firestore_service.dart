@@ -58,11 +58,13 @@ class FirestoreService {
         .snapshots() // Listen to real-time changes (no orderBy to avoid index)
         .map((snapshot) {
           // Convert each document to Book object and sort in memory
-          final books = snapshot.docs.map((doc) => Book.fromFirestore(doc)).toList();
-          
+          final books = snapshot.docs
+              .map((doc) => Book.fromFirestore(doc))
+              .toList();
+
           // Sort by createdAt in Dart instead of Firestore
           books.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          
+
           return books;
         });
   }

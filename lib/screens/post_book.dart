@@ -1,10 +1,10 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/firestore_service.dart';
-import '../services/storage_service.dart';
 
 /// Screen to post a new book listing
 ///
@@ -30,7 +30,6 @@ class _PostBookScreenState extends State<PostBookScreen> {
 
   // Services
   final FirestoreService _firestoreService = FirestoreService();
-  final StorageService _storageService = StorageService();
   final ImagePicker _imagePicker = ImagePicker();
 
   // State variables
@@ -196,6 +195,31 @@ class _PostBookScreenState extends State<PostBookScreen> {
     });
   }
 
+  /// Get a nice default book cover image
+  /// Uses free placeholder service with book-themed colors
+  String _getDefaultBookCover(String title) {
+    // List of book-themed colors (hex format)
+    final colors = [
+      '1a472a/ffffff', // Dark green
+      '2c2855/ffffff', // Purple (our brand color)
+      '8b4513/ffffff', // Brown (classic book color)
+      '0f4c75/ffffff', // Blue
+      'c44569/ffffff', // Red
+      '227c9d/ffffff', // Teal
+    ];
+
+    // Use title length to pick a consistent color for same title
+    final colorIndex = title.length % colors.length;
+    final color = colors[colorIndex];
+
+    // Create a nice placeholder with the book title
+    final encodedTitle = Uri.encodeComponent(
+      title.length > 20 ? '📚 Book' : title,
+    );
+
+    return 'https://via.placeholder.com/400x600/$color?text=$encodedTitle';
+  }
+
   /// Submit form and upload book
   Future<void> _submitBook() async {
     // Validate form
@@ -208,39 +232,32 @@ class _PostBookScreenState extends State<PostBookScreen> {
     });
 
     try {
-      String? imageUrl;
+      String imageUrl;
 
-      // Step 1: Upload image if selected
+      // Convert selected image to base64 or use default cover
       if (_selectedImage != null) {
-        try {
-          print('📸 Uploading image...');
-          imageUrl = await _storageService.uploadBookImage(_selectedImage!);
-          print('✅ Image uploaded: $imageUrl');
-        } catch (storageError) {
-          print('⚠️ Storage upload failed: $storageError');
-          // Use placeholder image if storage upload fails
-          imageUrl =
-              'https://via.placeholder.com/400x600/2C2855/FFFFFF?text=Book+Cover';
+        // Read the image file as bytes and convert to base64
+        final bytes = await _selectedImage!.readAsBytes();
+        final base64Image = base64Encode(bytes);
 
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Note: Using placeholder image (Firebase Storage not enabled)',
-                ),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 3),
-              ),
-            );
-          }
+        // Store as data URL (can be displayed in Image.network)
+        imageUrl = 'data:image/jpeg;base64,$base64Image';
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image uploaded successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
         }
       } else {
-        // No image selected - use placeholder
-        imageUrl =
-            'https://via.placeholder.com/400x600/2C2855/FFFFFF?text=No+Image';
+        // No image selected - use default cover based on title
+        imageUrl = _getDefaultBookCover(_titleController.text.trim());
       }
 
-      // Step 2: Add book to Firestore with image URL
+      // Add book to Firestore with image URL (base64 or placeholder)
       print('📚 Adding book to Firestore...');
       await _firestoreService.addBook(
         title: _titleController.text.trim(),

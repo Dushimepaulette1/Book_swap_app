@@ -3,8 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../models/book.dart';
+import '../utils/image_helper.dart';
 import 'welcome_screen.dart';
 import 'post_book.dart';
+import 'book_details_screen.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -169,49 +171,25 @@ class _BookCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to book details page
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Viewing: ${book.title}')));
+          // Navigate to book details page
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => BookDetailsScreen(book: book),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Book cover image
-            ClipRRect(
+            BookCoverImage(
+              imageUrl: book.imageUrl,
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(12),
-              ),
-              child: Image.network(
-                book.imageUrl ??
-                    'https://via.placeholder.com/400x600/2C2855/FFFFFF?text=No+Image',
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 180,
-                    color: const Color(0xFF2C2855),
-                    child: const Icon(
-                      Icons.book,
-                      size: 60,
-                      color: Colors.white,
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 180,
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF2C2855),
-                      ),
-                    ),
-                  );
-                },
               ),
             ),
 
@@ -400,10 +378,12 @@ class _MyBookCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to edit book page
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Edit: ${book.title}')));
+          // Navigate to book details page
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => BookDetailsScreen(book: book),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -412,27 +392,12 @@ class _MyBookCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Book cover image
-              ClipRRect(
+              BookCoverImage(
+                imageUrl: book.imageUrl,
+                width: 80,
+                height: 120,
+                fit: BoxFit.cover,
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  book.imageUrl ??
-                      'https://via.placeholder.com/400x600/2C2855/FFFFFF?text=No+Image',
-                  width: 80,
-                  height: 120,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 80,
-                      height: 120,
-                      color: const Color(0xFF2C2855),
-                      child: const Icon(
-                        Icons.book,
-                        size: 40,
-                        color: Colors.white,
-                      ),
-                    );
-                  },
-                ),
               ),
 
               const SizedBox(width: 12),
