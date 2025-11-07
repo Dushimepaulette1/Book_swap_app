@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/homepage.dart';
 import 'providers/book_provider.dart';
+import 'providers/swap_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,10 @@ class BookSwap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => BookProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => BookProvider()),
+        ChangeNotifierProvider(create: (_) => SwapProvider()),
+      ],
       child: MaterialApp(
         title: 'BookSwap',
         debugShowCheckedModeBanner: false,

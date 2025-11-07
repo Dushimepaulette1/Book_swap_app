@@ -5,10 +5,12 @@ import '../services/auth_service.dart';
 import '../models/book.dart';
 import '../utils/image_helper.dart';
 import '../providers/book_provider.dart';
+import '../providers/swap_provider.dart';
 import 'welcome_screen.dart';
 import 'post_book.dart';
 import 'book_details_screen.dart';
 import 'edit_book_screen.dart';
+import 'my_offers_screen.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -22,13 +24,21 @@ class _HomepageState extends State<Homepage> {
   int _selectedIndex = 0;
 
   // List of screens for each tab
-  // We'll create these screens next
   final List<Widget> _screens = [
     const BrowseListingsScreen(),
     const MyListingsScreen(),
-    const ChatsScreen(),
+    const MyOffersScreen(), // Replaced Chats with My Offers
     const SettingsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Start listening to pending offers count for notification badge
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SwapProvider>().listenToPendingOffersCount();
+    });
+  }
 
   // Function to handle tab changes
   void _onItemTapped(int index) {
@@ -53,17 +63,54 @@ class _HomepageState extends State<Homepage> {
         unselectedItemColor: Colors.white60,
         selectedFontSize: 12,
         unselectedFontSize: 12,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Browse'),
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.explore),
+            label: 'Browse',
+          ),
+          const BottomNavigationBarItem(
             icon: Icon(Icons.library_books),
             label: 'My Listings',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: 'Chats',
+            icon: Consumer<SwapProvider>(
+              builder: (context, swapProvider, child) {
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.swap_horiz),
+                    if (swapProvider.pendingOffersCount > 0)
+                      Positioned(
+                        right: -6,
+                        top: -6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${swapProvider.pendingOffersCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            label: 'My Offers',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),

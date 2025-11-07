@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../models/book.dart';
 import '../services/firestore_service.dart';
 import '../utils/image_helper.dart';
+import '../providers/book_provider.dart';
+import '../providers/swap_provider.dart';
 import 'edit_book_screen.dart';
 
 /// Book Details Screen
@@ -308,55 +311,175 @@ class BookDetailsScreen extends StatelessWidget {
     }
   }
 
-  /// Show swap offer dialog
-  void _showSwapOfferDialog(BuildContext context, Book book) {
+  /// Show swap offer dialog - Let user choose which book to offer
+  void _showSwapOfferDialog(BuildContext context, Book requestedBook) async {
+    // Get current user's books
+    final myBooks = context.read<BookProvider>().myBooks;
+
+    if (myBooks.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'You need to post a book first before making swap offers!',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Show dialog to select which book to offer
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Offer a Swap'),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Select Your Book to Offer'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'You want: "${requestedBook.title}"',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Owner is looking for: ${requestedBook.swapFor}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const Divider(height: 24),
+              const Text(
+                'Choose a book to offer in exchange:',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: myBooks.length,
+                  itemBuilder: (context, index) {
+                    final myBook = myBooks[index];
+                    return Card(
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.book,
+                          color: Color(0xFF2C2855),
+                        ),
+                        title: Text(
+                          myBook.title,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text('by ${myBook.author}'),
+                        trailing: const Icon(Icons.arrow_forward),
+                        onTap: () {
+                          Navigator.pop(dialogContext);
+                          _confirmSwapOffer(context, myBook, requestedBook);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Confirm swap offer
+  void _confirmSwapOffer(
+    BuildContext context,
+    Book offeredBook,
+    Book requestedBook,
+  ) {
+    // Capture the provider reference before opening the dialog
+    final swapProvider = context.read<SwapProvider>();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirm Swap Offer'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Make a swap offer for "${book.title}"?'),
-            const SizedBox(height: 16),
             const Text(
-              'The owner is looking for:',
+              'You are offering:',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 4),
             Text(
-              book.swapFor,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              offeredBook.title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 16),
+            const Icon(Icons.swap_horiz, size: 32, color: Color(0xFF2C2855)),
+            const SizedBox(height: 16),
             const Text(
-              'Note: Chat feature coming soon to discuss swap details!',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.orange,
-                fontStyle: FontStyle.italic,
+              'In exchange for:',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              requestedBook.title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Color(0xFF2C2855),
               ),
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Swap offer sent! Chat feature coming soon.'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+            onPressed: () async {
+              try {
+                // Create swap offer using the captured provider
+                await swapProvider.createSwapOffer(
+                  recipientId: requestedBook.ownerId,
+                  recipientEmail: requestedBook.ownerEmail,
+                  offeredBookId: offeredBook.id,
+                  offeredBookTitle: offeredBook.title,
+                  requestedBookId: requestedBook.id,
+                  requestedBookTitle: requestedBook.title,
+                );
+
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Swap offer sent successfully! 🎉'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to send offer: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2C2855),
+              foregroundColor: Colors.white,
             ),
             child: const Text('Send Offer'),
           ),
