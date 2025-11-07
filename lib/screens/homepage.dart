@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/firestore_service.dart';
 import '../models/book.dart';
 import '../utils/image_helper.dart';
+import '../providers/book_provider.dart';
 import 'welcome_screen.dart';
 import 'post_book.dart';
 import 'book_details_screen.dart';
@@ -73,32 +74,42 @@ class _HomepageState extends State<Homepage> {
 }
 
 // ==================== SCREEN 1: Browse Listings ====================
-class BrowseListingsScreen extends StatelessWidget {
+class BrowseListingsScreen extends StatefulWidget {
   const BrowseListingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final FirestoreService firestoreService = FirestoreService();
+  State<BrowseListingsScreen> createState() => _BrowseListingsScreenState();
+}
 
+class _BrowseListingsScreenState extends State<BrowseListingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Start listening to books when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BookProvider>().listenToAllBooks();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Browse Listings'),
         backgroundColor: const Color(0xFF2C2855),
         foregroundColor: Colors.white,
       ),
-      body: StreamBuilder<List<Book>>(
-        // Real-time stream of all books
-        stream: firestoreService.getAllBooks(),
-        builder: (context, snapshot) {
+      body: Consumer<BookProvider>(
+        builder: (context, bookProvider, child) {
           // Loading state
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (bookProvider.isLoading && bookProvider.allBooks.isEmpty) {
             return const Center(
               child: CircularProgressIndicator(color: Color(0xFF2C2855)),
             );
           }
 
           // Error state
-          if (snapshot.hasError) {
+          if (bookProvider.error != null && bookProvider.allBooks.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -106,9 +117,14 @@ class BrowseListingsScreen extends StatelessWidget {
                   const Icon(Icons.error_outline, size: 60, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
-                    'Error: ${snapshot.error}',
+                    'Error: ${bookProvider.error}',
                     style: const TextStyle(color: Colors.red),
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => bookProvider.fetchAllBooks(),
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
@@ -116,7 +132,7 @@ class BrowseListingsScreen extends StatelessWidget {
           }
 
           // No data state
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          if (bookProvider.allBooks.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -138,7 +154,7 @@ class BrowseListingsScreen extends StatelessWidget {
           }
 
           // Display books in a grid
-          final books = snapshot.data!;
+          final books = bookProvider.allBooks;
           return GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -270,32 +286,42 @@ class _BookCard extends StatelessWidget {
 }
 
 // ==================== SCREEN 2: My Listings ====================
-class MyListingsScreen extends StatelessWidget {
+class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final FirestoreService firestoreService = FirestoreService();
+  State<MyListingsScreen> createState() => _MyListingsScreenState();
+}
 
+class _MyListingsScreenState extends State<MyListingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Start listening to user's books when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BookProvider>().listenToMyBooks();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Listings'),
         backgroundColor: const Color(0xFF2C2855),
         foregroundColor: Colors.white,
       ),
-      body: StreamBuilder<List<Book>>(
-        // Real-time stream of user's books only
-        stream: firestoreService.getMyBooks(),
-        builder: (context, snapshot) {
+      body: Consumer<BookProvider>(
+        builder: (context, bookProvider, child) {
           // Loading state
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (bookProvider.isLoading && bookProvider.myBooks.isEmpty) {
             return const Center(
               child: CircularProgressIndicator(color: Color(0xFF2C2855)),
             );
           }
 
           // Error state
-          if (snapshot.hasError) {
+          if (bookProvider.error != null && bookProvider.myBooks.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -303,9 +329,14 @@ class MyListingsScreen extends StatelessWidget {
                   const Icon(Icons.error_outline, size: 60, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
-                    'Error: ${snapshot.error}',
+                    'Error: ${bookProvider.error}',
                     style: const TextStyle(color: Colors.red),
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => bookProvider.fetchMyBooks(),
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
@@ -313,7 +344,7 @@ class MyListingsScreen extends StatelessWidget {
           }
 
           // No data state
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          if (bookProvider.myBooks.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -339,7 +370,7 @@ class MyListingsScreen extends StatelessWidget {
           }
 
           // Display user's books in a list
-          final books = snapshot.data!;
+          final books = bookProvider.myBooks;
           return ListView.builder(
             padding: const EdgeInsets.all(12),
             itemCount: books.length,
@@ -532,22 +563,22 @@ class _MyBookCard extends StatelessWidget {
   void _showDeleteConfirmation(BuildContext context, Book book) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Book'),
         content: Text('Are you sure you want to delete "${book.title}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
               try {
-                // Delete from Firestore
-                await FirestoreService().deleteBook(book.id);
+                // Delete using Provider
+                await context.read<BookProvider>().deleteBook(book.id);
 
-                if (context.mounted) {
-                  Navigator.pop(context);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Book deleted successfully'),
@@ -556,8 +587,8 @@ class _MyBookCard extends StatelessWidget {
                   );
                 }
               } catch (e) {
-                if (context.mounted) {
-                  Navigator.pop(context);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Failed to delete: $e'),
