@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'welcome_screen.dart';
+import 'post_book.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -109,9 +110,9 @@ class MyListingsScreen extends StatelessWidget {
       // Floating action button to add new book
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Navigate to "Post a Book" screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Post Book feature coming soon!')),
+          // Navigate to Post a Book screen
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const PostBookScreen()),
           );
         },
         backgroundColor: const Color(0xFFF5C344),
