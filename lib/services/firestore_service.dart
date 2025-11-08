@@ -2,33 +2,24 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/book.dart';
 
-/// Service class to handle all Firestore operations for books
-///
-/// This handles Create, Read, Update, Delete (CRUD) operations
 class FirestoreService {
-  // Reference to the 'books' collection in Firestore
   final CollectionReference _booksCollection = FirebaseFirestore.instance
       .collection('books');
 
-  // Get current user
   User? get currentUser => FirebaseAuth.instance.currentUser;
 
-  /// CREATE: Add a new book listing
-  ///
-  /// Takes book data and adds it to Firestore
-  /// Returns the ID of the newly created book
+  // Adding new book to Firestore
   Future<String> addBook({
     required String title,
     required String author,
     required String condition,
     required String swapFor,
-    String? imageUrl, // Add optional image URL parameter
+    String? imageUrl,
   }) async {
     try {
       final user = currentUser;
       if (user == null) throw Exception('User not logged in');
 
-      // Create book data map
       final bookData = {
         'title': title,
         'author': author,
@@ -36,65 +27,47 @@ class FirestoreService {
         'swapFor': swapFor,
         'ownerId': user.uid,
         'ownerEmail': user.email ?? '',
-        'createdAt': FieldValue.serverTimestamp(), // Use server time
+        'createdAt': FieldValue.serverTimestamp(),
         'status': 'available',
-        'imageUrl': imageUrl, // Add image URL to data
+        'imageUrl': imageUrl,
       };
 
-      // Add to Firestore
       DocumentReference docRef = await _booksCollection.add(bookData);
-      return docRef.id; // Return the generated ID
+      return docRef.id;
     } catch (e) {
       throw Exception('Failed to add book: $e');
     }
   }
 
-  /// READ: Get all books (for Browse Listings screen)
-  ///
-  /// Returns a Stream that updates in real-time when data changes
-  /// Stream continuously listens for changes in Firestore
+  // Getting all books for browse listings
   Stream<List<Book>> getAllBooks() {
-    return _booksCollection
-        .snapshots() // Listen to real-time changes (no orderBy to avoid index)
-        .map((snapshot) {
-          // Convert each document to Book object and sort in memory
-          final books = snapshot.docs
-              .map((doc) => Book.fromFirestore(doc))
-              .toList();
-
-          // Sort by createdAt in Dart instead of Firestore
-          books.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-          return books;
-        });
+    return _booksCollection.snapshots().map((snapshot) {
+      final books = snapshot.docs
+          .map((doc) => Book.fromFirestore(doc))
+          .toList();
+      books.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return books;
+    });
   }
 
-  /// READ: Get only current user's books (for My Listings screen)
-  ///
-  /// Filters books by ownerId to show only user's listings
+  // Getting only my books
   Stream<List<Book>> getMyBooks() {
     final user = currentUser;
-    if (user == null) return Stream.value([]); // Empty stream if not logged in
+    if (user == null) return Stream.value([]);
 
     return _booksCollection
-        .where('ownerId', isEqualTo: user.uid) // Filter by owner
+        .where('ownerId', isEqualTo: user.uid)
         .snapshots()
         .map((snapshot) {
-          // Convert to list and sort by createdAt in Dart (not Firestore)
           final books = snapshot.docs
               .map((doc) => Book.fromFirestore(doc))
               .toList();
-
-          // Sort in memory instead of using Firestore orderBy
           books.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
           return books;
         });
   }
 
-  /// UPDATE: Edit an existing book
-  ///
-  /// Updates specific fields of a book document
+  // Updating book details
   Future<void> updateBook({
     required String bookId,
     required Map<String, dynamic> updates,
@@ -106,9 +79,7 @@ class FirestoreService {
     }
   }
 
-  /// DELETE: Remove a book listing
-  ///
-  /// Permanently deletes a book document from Firestore
+  // Deleting book
   Future<void> deleteBook(String bookId) async {
     try {
       await _booksCollection.doc(bookId).delete();
@@ -117,9 +88,7 @@ class FirestoreService {
     }
   }
 
-  /// Get a single book by ID
-  ///
-  /// Useful for viewing book details
+  // Getting single book by ID
   Future<Book?> getBookById(String bookId) async {
     try {
       DocumentSnapshot doc = await _booksCollection.doc(bookId).get();
@@ -133,9 +102,7 @@ class FirestoreService {
     }
   }
 
-  /// Update book status (available → pending → swapped)
-  ///
-  /// Used when users initiate swap offers
+  // Updating book status
   Future<void> updateBookStatus(String bookId, String newStatus) async {
     try {
       await _booksCollection.doc(bookId).update({'status': newStatus});

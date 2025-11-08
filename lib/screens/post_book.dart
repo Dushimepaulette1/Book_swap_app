@@ -21,25 +21,20 @@ class PostBookScreen extends StatefulWidget {
 }
 
 class _PostBookScreenState extends State<PostBookScreen> {
-  // Form key for validation
   final _formKey = GlobalKey<FormState>();
 
-  // Text controllers
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _authorController = TextEditingController();
   final TextEditingController _swapForController = TextEditingController();
 
-  // Services
   final FirestoreService _firestoreService = FirestoreService();
   final ImagePicker _imagePicker = ImagePicker();
 
-  // State variables
-  String _selectedCondition = 'New'; // Default condition
-  File? _selectedImage; // Stores the picked image
+  String _selectedCondition = 'New';
+  File? _selectedImage;
   bool _isLoading = false;
-  bool _isDragging = false; // Track if user is dragging over the drop zone
+  bool _isDragging = false;
 
-  // Condition options
   final List<String> _conditions = ['New', 'Like New', 'Good', 'Used'];
 
   @override
@@ -50,7 +45,7 @@ class _PostBookScreenState extends State<PostBookScreen> {
     super.dispose();
   }
 
-  /// Show bottom sheet with image source options
+  /// Showing bottom sheet with image source options
   Future<void> _showImageSourceOptions() async {
     showModalBottomSheet(
       context: context,
@@ -70,7 +65,7 @@ class _PostBookScreenState extends State<PostBookScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Camera option
+                // Camera option for taking photo
                 ListTile(
                   leading: const Icon(
                     Icons.camera_alt,
@@ -86,7 +81,7 @@ class _PostBookScreenState extends State<PostBookScreen> {
 
                 const Divider(),
 
-                // Gallery option
+                // Gallery option for choosing photos
                 ListTile(
                   leading: const Icon(
                     Icons.photo_library,
@@ -102,7 +97,7 @@ class _PostBookScreenState extends State<PostBookScreen> {
 
                 const Divider(),
 
-                // File Browser option
+                // File browser option for all files
                 ListTile(
                   leading: const Icon(
                     Icons.folder_open,
@@ -123,10 +118,10 @@ class _PostBookScreenState extends State<PostBookScreen> {
     );
   }
 
-  /// Pick image from specific source
+  /// Picking image from specific source
   Future<void> _pickImageFromSource(ImageSource source) async {
     try {
-      // Use ImagePicker to get image
+      // Using ImagePicker to get image
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: source,
         maxWidth: 1000, // Limit image size
@@ -148,11 +143,11 @@ class _PostBookScreenState extends State<PostBookScreen> {
     }
   }
 
-  /// Pick image using file picker (can access Downloads, Documents, etc.)
+  /// Picking image using file picker (can access Downloads, Documents, etc.)
   Future<void> _pickImageFromFiles() async {
     try {
-      // Use FilePicker - it uses Android's SAF (Storage Access Framework)
-      // which doesn't require runtime permissions!
+      // Using FilePicker - it uses Android's SAF (Storage Access Framework)
+      // which doesn't require runtime permissions
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'],
@@ -184,22 +179,22 @@ class _PostBookScreenState extends State<PostBookScreen> {
     }
   }
 
-  /// Pick image from gallery (backward compatibility)
+  /// Picking image from gallery (backward compatibility)
   Future<void> _pickImage() async {
     await _showImageSourceOptions();
   }
 
-  /// Remove selected image
+  /// Removing selected image
   void _removeImage() {
     setState(() {
       _selectedImage = null;
     });
   }
 
-  /// Get a nice default book cover image
+  /// Getting a nice default book cover image
   /// Uses free placeholder service with book-themed colors
   String _getDefaultBookCover(String title) {
-    // List of book-themed colors (hex format)
+    // Book-themed color list (hex format)
     final colors = [
       '1a472a/ffffff', // Dark green
       '2c2855/ffffff', // Purple (our brand color)
@@ -209,11 +204,11 @@ class _PostBookScreenState extends State<PostBookScreen> {
       '227c9d/ffffff', // Teal
     ];
 
-    // Use title length to pick a consistent color for same title
+    // Using title length to pick a consistent color for same title
     final colorIndex = title.length % colors.length;
     final color = colors[colorIndex];
 
-    // Create a nice placeholder with the book title
+    // Creating a nice placeholder with the book title
     final encodedTitle = Uri.encodeComponent(
       title.length > 20 ? '📚 Book' : title,
     );
@@ -221,9 +216,9 @@ class _PostBookScreenState extends State<PostBookScreen> {
     return 'https://via.placeholder.com/400x600/$color?text=$encodedTitle';
   }
 
-  /// Submit form and upload book
+  /// Submitting form and uploading book
   Future<void> _submitBook() async {
-    // Validate form
+    // Validating form
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -235,16 +230,16 @@ class _PostBookScreenState extends State<PostBookScreen> {
     try {
       String imageUrl;
 
-      // Compress selected image and convert to base64, or use default cover
+      // Compressing selected image and converting to base64, or using default cover
       if (_selectedImage != null) {
-        // Read the image file as bytes
+        // Reading the image file as bytes
         final bytes = await _selectedImage!.readAsBytes();
 
-        // Decode image
+        // Decoding image
         img.Image? image = img.decodeImage(bytes);
 
         if (image != null) {
-          // Resize image if too large (max 800x800 to stay within Firestore limits)
+          // Resizing image if too large (max 800x800 to stay within Firestore limits)
           if (image.width > 800 || image.height > 800) {
             image = img.copyResize(
               image,
@@ -253,14 +248,14 @@ class _PostBookScreenState extends State<PostBookScreen> {
             );
           }
 
-          // Compress image as JPEG with 70% quality
+          // Compressing image as JPEG with 70% quality
           final compressedBytes = img.encodeJpg(image, quality: 70);
 
-          // Convert to base64
+          // Converting to base64
           final base64Image = base64Encode(compressedBytes);
           imageUrl = 'data:image/jpeg;base64,$base64Image';
         } else {
-          // Fallback if image decode fails
+          // Falling back if image decode fails
           final base64Image = base64Encode(bytes);
           imageUrl = 'data:image/jpeg;base64,$base64Image';
         }
@@ -353,10 +348,10 @@ class _PostBookScreenState extends State<PostBookScreen> {
                     // Image picker section with drag & drop
                     DropTarget(
                       onDragDone: (detail) {
-                        // Handle dropped files
+                        // Handling dropped files
                         if (detail.files.isNotEmpty) {
                           final file = detail.files.first;
-                          // Check if it's an image
+                          // Checking if it's an image
                           if (file.path.toLowerCase().endsWith('.jpg') ||
                               file.path.toLowerCase().endsWith('.jpeg') ||
                               file.path.toLowerCase().endsWith('.png') ||

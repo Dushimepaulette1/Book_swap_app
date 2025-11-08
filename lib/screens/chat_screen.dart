@@ -264,7 +264,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  /// Build a message bubble
+  /// Building a message bubble
   Widget _buildMessageBubble(ChatMessage message, bool isMe) {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,

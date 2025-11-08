@@ -56,7 +56,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
     super.dispose();
   }
 
-  /// Show image source options
+  /// Showing image source options
   Future<void> _showImageSourceOptions() async {
     showModalBottomSheet(
       context: context,
@@ -118,7 +118,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
     );
   }
 
-  /// Pick image from camera/gallery
+  /// Picking image from camera/gallery
   Future<void> _pickImageFromSource(ImageSource source) async {
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
@@ -143,7 +143,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
     }
   }
 
-  /// Pick image from files
+  /// Picking image from files
   Future<void> _pickImageFromFiles() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -169,7 +169,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
     }
   }
 
-  /// Get default book cover
+  /// Getting default book cover
   String _getDefaultBookCover(String title) {
     final colors = [
       '1a472a/ffffff',
@@ -189,7 +189,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
     return 'https://via.placeholder.com/400x600/$color?text=$encodedTitle';
   }
 
-  /// Submit form and update book
+  /// Submitting form and updating book
   Future<void> _submitUpdate() async {
     if (!_formKey.currentState!.validate()) {
       return;

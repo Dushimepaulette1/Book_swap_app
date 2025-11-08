@@ -2,25 +2,22 @@ import 'package:flutter/foundation.dart';
 import '../models/swap_offer.dart';
 import '../services/swap_service.dart';
 
-/// Provider for managing swap offers state
 class SwapProvider with ChangeNotifier {
   final SwapService _swapService = SwapService();
 
-  // State variables
   List<SwapOffer> _sentOffers = [];
   List<SwapOffer> _receivedOffers = [];
   int _pendingOffersCount = 0;
   bool _isLoading = false;
   String? _error;
 
-  // Getters
   List<SwapOffer> get sentOffers => _sentOffers;
   List<SwapOffer> get receivedOffers => _receivedOffers;
   int get pendingOffersCount => _pendingOffersCount;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Listen to sent offers in real-time
+  // Listening to offers in real-time
   void listenToSentOffers() {
     _swapService.getSentOffers().listen(
       (offers) {
@@ -35,7 +32,6 @@ class SwapProvider with ChangeNotifier {
     );
   }
 
-  /// Listen to received offers in real-time
   void listenToReceivedOffers() {
     _swapService.getReceivedOffers().listen(
       (offers) {
@@ -50,7 +46,6 @@ class SwapProvider with ChangeNotifier {
     );
   }
 
-  /// Listen to pending offers count for notification badge
   void listenToPendingOffersCount() {
     _swapService.getPendingReceivedOffersCount().listen((count) {
       _pendingOffersCount = count;
@@ -58,7 +53,6 @@ class SwapProvider with ChangeNotifier {
     });
   }
 
-  /// Create a new swap offer
   Future<void> createSwapOffer({
     required String recipientId,
     required String recipientEmail,
@@ -91,11 +85,9 @@ class SwapProvider with ChangeNotifier {
     }
   }
 
-  /// Accept a swap offer
   Future<void> acceptOffer(String offerId) async {
     try {
       await _swapService.acceptOffer(offerId);
-      // Real-time listener will update the list automatically
     } catch (e) {
       _error = 'Failed to accept offer: $e';
       notifyListeners();
@@ -103,11 +95,9 @@ class SwapProvider with ChangeNotifier {
     }
   }
 
-  /// Reject a swap offer
   Future<void> rejectOffer(String offerId) async {
     try {
       await _swapService.rejectOffer(offerId);
-      // Real-time listener will update the list automatically
     } catch (e) {
       _error = 'Failed to reject offer: $e';
       notifyListeners();
@@ -115,11 +105,9 @@ class SwapProvider with ChangeNotifier {
     }
   }
 
-  /// Cancel a swap offer
   Future<void> cancelOffer(String offerId) async {
     try {
       await _swapService.cancelOffer(offerId);
-      // Real-time listener will update the list automatically
     } catch (e) {
       _error = 'Failed to cancel offer: $e';
       notifyListeners();
@@ -127,7 +115,6 @@ class SwapProvider with ChangeNotifier {
     }
   }
 
-  /// Clear error message
   void clearError() {
     _error = null;
     notifyListeners();

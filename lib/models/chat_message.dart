@@ -1,15 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Model for chat messages between users
-///
-/// Each message is linked to a swap offer and contains:
-/// - Message content
-/// - Sender information
-/// - Timestamp
-/// - Read status
 class ChatMessage {
   final String id;
-  final String swapOfferId; // Link to the swap offer
+  final String swapOfferId;
   final String senderId;
   final String senderEmail;
   final String message;
@@ -26,7 +19,6 @@ class ChatMessage {
     this.isRead = false,
   });
 
-  /// Create ChatMessage from Firestore document
   factory ChatMessage.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ChatMessage(
@@ -40,7 +32,6 @@ class ChatMessage {
     );
   }
 
-  /// Convert to map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'swapOfferId': swapOfferId,
@@ -52,7 +43,6 @@ class ChatMessage {
     };
   }
 
-  /// Create a copy with updated fields
   ChatMessage copyWith({
     String? id,
     String? swapOfferId,

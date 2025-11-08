@@ -7,6 +7,7 @@ import '../models/book.dart';
 import '../utils/image_helper.dart';
 import '../providers/book_provider.dart';
 import '../providers/swap_provider.dart';
+import '../providers/chat_provider.dart';
 import 'welcome_screen.dart';
 import 'post_book.dart';
 import 'book_details_screen.dart';
@@ -35,9 +36,10 @@ class _HomepageState extends State<Homepage> {
   @override
   void initState() {
     super.initState();
-    // Start listening to pending offers count for notification badge
+    // Start listening to pending offers count and unread messages for notification badge
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SwapProvider>().listenToPendingOffersCount();
+      context.read<ChatProvider>().listenToTotalUnreadCount();
     });
   }
 
@@ -74,13 +76,16 @@ class _HomepageState extends State<Homepage> {
             label: 'My Listings',
           ),
           BottomNavigationBarItem(
-            icon: Consumer<SwapProvider>(
-              builder: (context, swapProvider, child) {
+            icon: Consumer2<SwapProvider, ChatProvider>(
+              builder: (context, swapProvider, chatProvider, child) {
+                final totalCount =
+                    swapProvider.pendingOffersCount +
+                    chatProvider.totalUnreadCount;
                 return Stack(
                   clipBehavior: Clip.none,
                   children: [
                     const Icon(Icons.swap_horiz),
-                    if (swapProvider.pendingOffersCount > 0)
+                    if (totalCount > 0)
                       Positioned(
                         right: -6,
                         top: -6,
@@ -95,7 +100,7 @@ class _HomepageState extends State<Homepage> {
                             minHeight: 16,
                           ),
                           child: Text(
-                            '${swapProvider.pendingOffersCount}',
+                            '$totalCount',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -236,7 +241,7 @@ class _BookCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // Navigate to book details page
+          // Navigating to book details page
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => BookDetailsScreen(book: book),
@@ -247,7 +252,7 @@ class _BookCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Book cover image
+            // Book cover image section
             BookCoverImage(
               imageUrl: book.imageUrl,
               height: 180,
@@ -258,14 +263,14 @@ class _BookCard extends StatelessWidget {
               ),
             ),
 
-            // Book details
+            // Book details section
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
+                    // Book title
                     Text(
                       book.title,
                       style: const TextStyle(
@@ -432,7 +437,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       // Floating action button to add new book
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to Post a Book screen
+          // Navigating to Post a Book screen
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const PostBookScreen()),
           );
@@ -458,7 +463,7 @@ class _MyBookCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // Navigate to book details page
+          // Navigating to book details page
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => BookDetailsScreen(book: book),
@@ -471,7 +476,7 @@ class _MyBookCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Book cover image
+              // Book cover image section
               BookCoverImage(
                 imageUrl: book.imageUrl,
                 width: 80,
@@ -588,14 +593,14 @@ class _MyBookCard extends StatelessWidget {
                 ],
                 onSelected: (value) {
                   if (value == 'edit') {
-                    // Navigate to edit screen
+                    // Navigating to edit screen
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => EditBookScreen(book: book),
                       ),
                     );
                   } else if (value == 'delete') {
-                    // Show delete confirmation
+                    // Showing delete confirmation
                     _showDeleteConfirmation(context, book);
                   }
                 },
@@ -607,7 +612,7 @@ class _MyBookCard extends StatelessWidget {
     );
   }
 
-  /// Show delete confirmation dialog
+  /// Showing delete confirmation dialog
   void _showDeleteConfirmation(BuildContext context, Book book) {
     showDialog(
       context: context,
@@ -622,7 +627,7 @@ class _MyBookCard extends StatelessWidget {
           TextButton(
             onPressed: () async {
               try {
-                // Delete using Provider
+                // Deleting using Provider
                 await context.read<BookProvider>().deleteBook(book.id);
 
                 if (dialogContext.mounted) {
@@ -653,7 +658,7 @@ class _MyBookCard extends StatelessWidget {
     );
   }
 
-  /// Get color based on book condition
+  /// Getting color based on book condition
   Color _getConditionColor(String condition) {
     switch (condition.toLowerCase()) {
       case 'new':
@@ -732,7 +737,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _notificationsEnabled = value;
     });
 
-    // Show confirmation message (local simulation)
+    // Showing confirmation message (local simulation)
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -756,7 +761,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _emailUpdatesEnabled = value;
     });
 
-    // Show confirmation message (local simulation)
+    // Showing confirmation message (local simulation)
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -896,12 +901,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const Divider(),
 
-          // Sign Out Button
+          // Sign out button
           Padding(
             padding: const EdgeInsets.all(16),
             child: ElevatedButton.icon(
               onPressed: () async {
-                // Show confirmation dialog
+                // Showing confirmation dialog
                 final shouldLogout = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(

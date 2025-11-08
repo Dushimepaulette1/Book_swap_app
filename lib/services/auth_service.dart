@@ -6,8 +6,7 @@ class AuthService {
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  /// Sign up with email and password
-  /// Automatically sends verification email
+  // Signing up and sending verification email
   Future<UserCredential> signUp({
     required String email,
     required String password,
@@ -17,15 +16,12 @@ class AuthService {
       password: password,
     );
 
-    // Send verification email immediately after sign up
     await userCredential.user?.sendEmailVerification();
 
     return userCredential;
   }
 
-  /// Sign in with email and password
-  /// Note: Email verification is only enforced during sign up
-  /// Once verified and logged in, users stay verified
+  // Signing in with email and password
   Future<UserCredential> signIn({
     required String email,
     required String password,
@@ -38,7 +34,7 @@ class AuthService {
     return userCredential;
   }
 
-  /// Resend verification email
+  // Resending verification email
   Future<void> resendVerificationEmail() async {
     final user = _auth.currentUser;
     if (user != null && !user.emailVerified) {
@@ -46,7 +42,7 @@ class AuthService {
     }
   }
 
-  /// Check if current user's email is verified
+  // Checking if email is verified
   Future<bool> isEmailVerified() async {
     await _auth.currentUser?.reload();
     return _auth.currentUser?.emailVerified ?? false;

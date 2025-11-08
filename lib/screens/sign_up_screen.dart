@@ -33,7 +33,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
-  // Password validation function
+  // Validating password
   String? _validatePassword(String password) {
     if (password.isEmpty) {
       return 'Password is required';
@@ -49,7 +49,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     String password = _passwordController.text.trim();
     String confirmPassword = _confirmPasswordController.text.trim();
 
-    // cchacking validation for email and also the password
+    // Checking validation for email and password
     if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
@@ -84,15 +84,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
 
     try {
-      // Calling Firebase to create an account and send verification email
+      // Creating account and sending verification email
       await _authService.signUp(email: email, password: password);
 
-      // Sign them out immediately so they can't use the app without verification
+      // Signing out immediately so they can't use the app without verification
       await _authService.signOut();
 
-      // Show success message with verification instructions
+      // Showing success message with verification instructions
       if (mounted) {
-        // Show dialog instead of snackbar for important message
+        // Showing dialog instead of snackbar for important message
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -140,8 +140,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Go back to login
+                  Navigator.of(context).pop(); // Closing dialog
+                  Navigator.of(context).pop(); // Going back to login
                 },
                 child: const Text('OK, Got it!'),
               ),
@@ -213,7 +213,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 children: [
                   const SizedBox(height: 20),
 
-                  // Title
+                  // Page title
                   const Text(
                     'Create Account',
                     style: TextStyle(

@@ -9,12 +9,6 @@ import '../providers/swap_provider.dart';
 import 'edit_book_screen.dart';
 
 /// Book Details Screen
-///
-/// Shows full details of a book and allows users to:
-/// - View all book information
-/// - See owner details
-/// - Initiate swap offers
-/// - Edit/delete (if owner)
 class BookDetailsScreen extends StatelessWidget {
   final Book book;
 
@@ -58,7 +52,7 @@ class BookDetailsScreen extends StatelessWidget {
               ],
               onSelected: (value) {
                 if (value == 'edit') {
-                  // Navigate to edit screen
+                  // Navigating to edit screen
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => EditBookScreen(book: book),
@@ -75,7 +69,7 @@ class BookDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Book cover image
+            // Book cover image section
             Hero(
               tag: 'book_${book.id}',
               child: BookCoverImage(
@@ -86,13 +80,13 @@ class BookDetailsScreen extends StatelessWidget {
               ),
             ),
 
-            // Book information
+            // Book information section
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
+                  // Book title
                   Text(
                     book.title,
                     style: const TextStyle(
@@ -103,7 +97,7 @@ class BookDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Author
+                  // Author name
                   Text(
                     'by ${book.author}',
                     style: TextStyle(
@@ -114,7 +108,7 @@ class BookDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // Condition and Status badges
+                  // Condition and status badges
                   Row(
                     children: [
                       _buildBadge(
@@ -130,11 +124,10 @@ class BookDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Divider
                   const Divider(),
                   const SizedBox(height: 16),
 
-                  // Swap preference
+                  // Swap preference section
                   const Text(
                     'Owner is looking to swap for:',
                     style: TextStyle(
@@ -165,11 +158,10 @@ class BookDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Divider
                   const Divider(),
                   const SizedBox(height: 16),
 
-                  // Owner information
+                  // Owner information section
                   const Text(
                     'Listed by:',
                     style: TextStyle(
@@ -221,7 +213,7 @@ class BookDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
-      // Bottom action button
+      // Bottom action button for non-owners
       bottomNavigationBar: !isOwner && book.status == 'available'
           ? Container(
               padding: const EdgeInsets.all(16),
@@ -257,7 +249,7 @@ class BookDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Build badge widget
+  /// Building badge widget
   Widget _buildBadge(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -276,7 +268,7 @@ class BookDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Get color based on book condition
+  /// Getting color based on book condition
   Color _getConditionColor(String condition) {
     switch (condition.toLowerCase()) {
       case 'new':
@@ -292,7 +284,7 @@ class BookDetailsScreen extends StatelessWidget {
     }
   }
 
-  /// Format date
+  /// Formatting date
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -311,9 +303,9 @@ class BookDetailsScreen extends StatelessWidget {
     }
   }
 
-  /// Show swap offer dialog - Let user choose which book to offer
+  /// Showing swap offer dialog - letting user choose which book to offer
   void _showSwapOfferDialog(BuildContext context, Book requestedBook) async {
-    // Get current user's books
+    // Getting current user's books
     final myBooks = context.read<BookProvider>().myBooks;
 
     if (myBooks.isEmpty) {
@@ -328,7 +320,7 @@ class BookDetailsScreen extends StatelessWidget {
       return;
     }
 
-    // Show dialog to select which book to offer
+    // Showing dialog to select which book to offer
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -394,7 +386,7 @@ class BookDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Confirm swap offer
+  /// Confirming swap offer
   void _confirmSwapOffer(
     BuildContext context,
     Book offeredBook,
@@ -489,7 +481,7 @@ class BookDetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Show delete confirmation dialog
+  /// Showing delete confirmation dialog
   void _showDeleteConfirmation(BuildContext context, Book book) {
     showDialog(
       context: context,
@@ -504,12 +496,12 @@ class BookDetailsScreen extends StatelessWidget {
           TextButton(
             onPressed: () async {
               try {
-                // Delete from Firestore
+                // Deleting from Firestore
                 await FirestoreService().deleteBook(book.id);
 
                 if (context.mounted) {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Go back to previous screen
+                  Navigator.pop(context); // Closing dialog
+                  Navigator.pop(context); // Going back to previous screen
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Book deleted successfully'),

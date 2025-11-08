@@ -48,7 +48,7 @@ class _SignInScreenState extends State<SignInScreen> {
       _emailController.clear();
       _passwordController.clear();
 
-      // If successful, navigate to homepage
+      // If successful, navigating to homepage
       if (mounted) {
         Navigator.of(
           context,
@@ -144,7 +144,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                   const SizedBox(height: 40),
 
-                  // Email text field
+                  // Email input field
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,

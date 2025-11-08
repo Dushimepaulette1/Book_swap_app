@@ -7,6 +7,7 @@ import 'screens/welcome_screen.dart';
 import 'screens/homepage.dart';
 import 'providers/book_provider.dart';
 import 'providers/swap_provider.dart';
+import 'providers/chat_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,7 @@ class BookSwap extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => BookProvider()),
         ChangeNotifierProvider(create: (_) => SwapProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp(
         title: 'BookSwap',
@@ -31,13 +33,13 @@ class BookSwap extends StatelessWidget {
           primaryColor: const Color(0xFF2C2855),
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2C2855)),
         ),
-        home: const AuthWrapper(), // Check if user is already logged in
+        home: const AuthWrapper(),
       ),
     );
   }
 }
 
-/// Wrapper to check authentication state
+// Checking if user is logged in or not
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -46,7 +48,6 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Show loading while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
@@ -55,12 +56,10 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // If user is logged in, go to homepage
         if (snapshot.hasData) {
           return const Homepage();
         }
 
-        // Otherwise, show welcome screen
         return const WelcomeScreen();
       },
     );

@@ -1,22 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-/// Swap Offer Model
-///
-/// Represents a swap offer where one user wants to exchange
-/// their book for another user's book
+// Model of the swap offer 
 class SwapOffer {
   final String id;
-  final String senderId; // User who initiated the swap
-  final String senderEmail; // For display
-  final String recipientId; // User who owns the requested book
-  final String recipientEmail; // For display
-  final String offeredBookId; // Book the sender is offering
-  final String offeredBookTitle; // For display
-  final String requestedBookId; // Book the sender wants
-  final String requestedBookTitle; // For display
-  final String status; // 'pending', 'accepted', 'rejected'
+  final String senderId;
+  final String senderEmail;
+  final String recipientId;
+  final String recipientEmail;
+  final String offeredBookId;
+  final String offeredBookTitle;
+  final String requestedBookId;
+  final String requestedBookTitle;
+  final String status;
   final DateTime createdAt;
-  final DateTime? respondedAt; // When recipient accepted/rejected
+  final DateTime? respondedAt;
 
   SwapOffer({
     required this.id,
@@ -33,7 +29,6 @@ class SwapOffer {
     this.respondedAt,
   });
 
-  /// Create SwapOffer from Firestore document
   factory SwapOffer.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return SwapOffer(
@@ -54,7 +49,6 @@ class SwapOffer {
     );
   }
 
-  /// Convert SwapOffer to Firestore map
   Map<String, dynamic> toFirestore() {
     return {
       'senderId': senderId,
@@ -73,7 +67,6 @@ class SwapOffer {
     };
   }
 
-  /// Create a copy with updated fields
   SwapOffer copyWith({
     String? id,
     String? senderId,

@@ -2,37 +2,25 @@ import 'package:flutter/foundation.dart';
 import '../models/book.dart';
 import '../services/firestore_service.dart';
 
-/// Provider for managing book listings state
-///
-/// This provider:
-/// - Fetches books from Firestore
-/// - Manages book state (all books and user's books)
-/// - Notifies listeners when data changes
-/// - Handles real-time updates
 class BookProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
 
-  // State variables
   List<Book> _allBooks = [];
   List<Book> _myBooks = [];
   bool _isLoading = false;
   String? _error;
 
-  // Getters
   List<Book> get allBooks => _allBooks;
   List<Book> get myBooks => _myBooks;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Fetch all books from Firestore
   Future<void> fetchAllBooks() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Note: We'll use Stream later for real-time updates
-      // For now, fetch once
       final books = await _firestoreService.getAllBooks().first;
       _allBooks = books;
       _error = null;
@@ -45,7 +33,6 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  /// Fetch current user's books
   Future<void> fetchMyBooks() async {
     _isLoading = true;
     _error = null;
@@ -64,7 +51,7 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  /// Listen to all books in real-time
+  // Listening to books in real time
   void listenToAllBooks() {
     _firestoreService.getAllBooks().listen(
       (books) {
@@ -79,7 +66,6 @@ class BookProvider with ChangeNotifier {
     );
   }
 
-  /// Listen to user's books in real-time
   void listenToMyBooks() {
     _firestoreService.getMyBooks().listen(
       (books) {
@@ -94,7 +80,6 @@ class BookProvider with ChangeNotifier {
     );
   }
 
-  /// Add a new book
   Future<void> addBook({
     required String title,
     required String author,
@@ -110,7 +95,6 @@ class BookProvider with ChangeNotifier {
         swapFor: swapFor,
         imageUrl: imageUrl,
       );
-      // Real-time listener will update the lists automatically
     } catch (e) {
       _error = 'Failed to add book: $e';
       notifyListeners();
@@ -118,14 +102,12 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  /// Update an existing book
   Future<void> updateBook({
     required String bookId,
     required Map<String, dynamic> updates,
   }) async {
     try {
       await _firestoreService.updateBook(bookId: bookId, updates: updates);
-      // Real-time listener will update the lists automatically
     } catch (e) {
       _error = 'Failed to update book: $e';
       notifyListeners();
@@ -133,11 +115,9 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  /// Delete a book
   Future<void> deleteBook(String bookId) async {
     try {
       await _firestoreService.deleteBook(bookId);
-      // Real-time listener will update the lists automatically
     } catch (e) {
       _error = 'Failed to delete book: $e';
       notifyListeners();
@@ -145,7 +125,6 @@ class BookProvider with ChangeNotifier {
     }
   }
 
-  /// Clear error message
   void clearError() {
     _error = null;
     notifyListeners();

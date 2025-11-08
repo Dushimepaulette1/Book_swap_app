@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/swap_provider.dart';
 import '../models/swap_offer.dart';
+import '../services/chat_service.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'chat_screen.dart';
 
@@ -22,7 +23,7 @@ class _MyOffersScreenState extends State<MyOffersScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
 
-    // Start listening to offers when screen loads
+    // Starting to listen to offers when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SwapProvider>().listenToSentOffers();
       context.read<SwapProvider>().listenToReceivedOffers();
@@ -43,7 +44,7 @@ class _MyOffersScreenState extends State<MyOffersScreen>
         title: const Text('My Swap Offers'),
         backgroundColor: const Color(0xFF2C2855),
         foregroundColor: Colors.white,
-        automaticallyImplyLeading: false, // Remove back button
+        automaticallyImplyLeading: false, // Removing back button
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: const Color(0xFFF5C344),
@@ -269,21 +270,57 @@ class SentOfferCard extends StatelessWidget {
             if (offer.status == 'accepted')
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(swapOffer: offer),
+                child: StreamBuilder<int>(
+                  stream: ChatService().getUnreadCountStream(offer.id),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data ?? 0;
+                    return ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(swapOffer: offer),
+                          ),
+                        );
+                      },
+                      icon: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          const Icon(Icons.chat),
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: -8,
+                              top: -8,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  '$unreadCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      label: const Text('Chat'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C2855),
+                        foregroundColor: Colors.white,
                       ),
                     );
                   },
-                  icon: const Icon(Icons.chat),
-                  label: const Text('Chat'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C2855),
-                    foregroundColor: Colors.white,
-                  ),
                 ),
               ),
           ],
@@ -479,21 +516,57 @@ class ReceivedOfferCard extends StatelessWidget {
             if (offer.status == 'accepted')
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(swapOffer: offer),
+                child: StreamBuilder<int>(
+                  stream: ChatService().getUnreadCountStream(offer.id),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data ?? 0;
+                    return ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(swapOffer: offer),
+                          ),
+                        );
+                      },
+                      icon: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          const Icon(Icons.chat),
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: -8,
+                              top: -8,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  '$unreadCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      label: const Text('Chat'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C2855),
+                        foregroundColor: Colors.white,
                       ),
                     );
                   },
-                  icon: const Icon(Icons.chat),
-                  label: const Text('Chat'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C2855),
-                    foregroundColor: Colors.white,
-                  ),
                 ),
               ),
           ],
