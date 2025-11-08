@@ -460,8 +460,9 @@ class BookDetailsScreen extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Swap offer sent successfully! 🎉'),
+                      content: Text('Your offer sent, waiting for approval 📩'),
                       backgroundColor: Colors.green,
+                      duration: Duration(seconds: 3),
                     ),
                   );
                 }
