@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../models/book.dart';
 import '../utils/image_helper.dart';
@@ -705,6 +706,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Settings toggles
   bool _notificationsEnabled = true;
   bool _emailUpdatesEnabled = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  /// Load saved preferences from SharedPreferences
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+      _emailUpdatesEnabled = prefs.getBool('email_updates_enabled') ?? false;
+      _isLoading = false;
+    });
+  }
+
+  /// Save notification preference
+  Future<void> _saveNotificationPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', value);
+    setState(() {
+      _notificationsEnabled = value;
+    });
+
+    // Show confirmation message (local simulation)
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? '🔔 Push notifications enabled'
+                : '🔕 Push notifications disabled',
+          ),
+          backgroundColor: value ? Colors.green : Colors.grey,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// Save email updates preference
+  Future<void> _saveEmailUpdatesPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('email_updates_enabled', value);
+    setState(() {
+      _emailUpdatesEnabled = value;
+    });
+
+    // Show confirmation message (local simulation)
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value ? '📧 Email updates enabled' : '📧 Email updates disabled',
+          ),
+          backgroundColor: value ? Colors.green : Colors.grey,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -777,14 +841,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           SwitchListTile(
             title: const Text('Push Notifications'),
-            subtitle: const Text('Receive notifications about new messages'),
+            subtitle: const Text('Receive notifications about swap offers'),
             value: _notificationsEnabled,
             activeColor: const Color(0xFFF5C344),
-            onChanged: (value) {
-              setState(() {
-                _notificationsEnabled = value;
-              });
-            },
+            onChanged: _isLoading ? null : _saveNotificationPreference,
           ),
 
           SwitchListTile(
@@ -792,11 +852,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('Receive email about swap offers'),
             value: _emailUpdatesEnabled,
             activeColor: const Color(0xFFF5C344),
-            onChanged: (value) {
-              setState(() {
-                _emailUpdatesEnabled = value;
-              });
-            },
+            onChanged: _isLoading ? null : _saveEmailUpdatesPreference,
           ),
 
           const Divider(),

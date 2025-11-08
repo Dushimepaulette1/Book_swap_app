@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/swap_provider.dart';
 import '../models/swap_offer.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'chat_screen.dart';
 
 /// My Offers Screen - Shows sent and received swap offers
 class MyOffersScreen extends StatefulWidget {
@@ -42,6 +43,7 @@ class _MyOffersScreenState extends State<MyOffersScreen>
         title: const Text('My Swap Offers'),
         backgroundColor: const Color(0xFF2C2855),
         foregroundColor: Colors.white,
+        automaticallyImplyLeading: false, // Remove back button
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: const Color(0xFFF5C344),
@@ -249,9 +251,9 @@ class SentOfferCard extends StatelessWidget {
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
 
-            // Cancel button (only for pending offers)
-            if (offer.status == 'pending') ...[
-              const SizedBox(height: 12),
+            // Action buttons
+            const SizedBox(height: 12),
+            if (offer.status == 'pending')
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -264,7 +266,26 @@ class SentOfferCard extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
+            if (offer.status == 'accepted')
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(swapOffer: offer),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat),
+                  label: const Text('Chat'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2C2855),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -425,9 +446,9 @@ class ReceivedOfferCard extends StatelessWidget {
               ),
             ),
 
-            // Accept/Reject buttons (only for pending offers)
-            if (offer.status == 'pending') ...[
-              const SizedBox(height: 16),
+            // Action buttons
+            const SizedBox(height: 16),
+            if (offer.status == 'pending')
               Row(
                 children: [
                   Expanded(
@@ -455,7 +476,26 @@ class ReceivedOfferCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ],
+            if (offer.status == 'accepted')
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(swapOffer: offer),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat),
+                  label: const Text('Chat'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2C2855),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
