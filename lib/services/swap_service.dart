@@ -92,7 +92,7 @@ class SwapService {
       await _firestoreService.deleteBook(offer.offeredBookId);
       await _firestoreService.deleteBook(offer.requestedBookId);
     } catch (e) {
-      print('Error deleting books: $e');
+      // Error deleting books - swap will still be marked as complete
     }
   }
 

@@ -43,12 +43,50 @@ class _SignInScreenState extends State<SignInScreen> {
     });
 
     try {
-      await _authService.signIn(email: email, password: password);
+      final userCredential = await _authService.signIn(
+        email: email,
+        password: password,
+      );
+
+      // Check if email is verified
+      if (!userCredential.user!.emailVerified) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                '📧 Please verify your email before signing in.\nCheck your inbox for the verification link.',
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Resend',
+                textColor: Colors.white,
+                onPressed: () async {
+                  await _authService.resendVerificationEmail();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Verification email sent! Check your inbox.',
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          );
+        }
+        // Sign out the unverified user
+        await _authService.signOut();
+        return;
+      }
 
       _emailController.clear();
       _passwordController.clear();
 
-      // If successful, navigating to homepage
+      // If successful and verified, navigating to homepage
       if (mounted) {
         Navigator.of(
           context,
@@ -157,7 +195,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         color: Colors.white70,
                       ),
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.1),
+                      fillColor: Colors.white.withValues(alpha: 0.1),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -189,7 +227,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         },
                       ),
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.1),
+                      fillColor: Colors.white.withValues(alpha: 0.1),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,

@@ -237,7 +237,8 @@ class _EditBookScreenState extends State<EditBookScreen> {
       }
 
       // Update book in Firestore using Provider
-      await context.read<BookProvider>().updateBook(
+      final bookProvider = context.read<BookProvider>();
+      await bookProvider.updateBook(
         bookId: widget.book.id,
         updates: {
           'title': _titleController.text.trim(),
@@ -248,15 +249,14 @@ class _EditBookScreenState extends State<EditBookScreen> {
         },
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Book updated successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context); // Go back
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Book updated successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context); // Go back
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -367,7 +367,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
 
             // Condition dropdown
             DropdownButtonFormField<String>(
-              value: _selectedCondition,
+              initialValue: _selectedCondition,
               decoration: const InputDecoration(
                 labelText: 'Condition *',
                 border: OutlineInputBorder(),

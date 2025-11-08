@@ -76,7 +76,6 @@ class BookCoverImage extends StatelessWidget {
 
       return imageWidget;
     } catch (e) {
-      print('Error decoding base64 image: $e');
       return _buildPlaceholder();
     }
   }

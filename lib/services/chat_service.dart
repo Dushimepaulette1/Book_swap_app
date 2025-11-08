@@ -75,19 +75,43 @@ class ChatService {
   }
 
   // Getting the total unread messages count across all chats
-  Stream<int> getTotalUnreadCountStream() {
+  Stream<int> getTotalUnreadCountStream() async* {
     final user = _auth.currentUser;
-    if (user == null) return Stream.value(0);
+    if (user == null) {
+      yield 0;
+      return;
+    }
 
-    return _messagesCollection
-        .where('senderId', isNotEqualTo: user.uid)
-        .where('isRead', isEqualTo: false)
-        .snapshots()
-        .map((snapshot) {
-          // Filter messages where current user is the recipient
-          // (messages sent to me that I haven't read)
-          return snapshot.docs.length;
-        });
+    // First, get all accepted swap offers where current user is involved
+    await for (var swapSnapshot
+        in _firestore
+            .collection('swap_offers')
+            .where('status', isEqualTo: 'accepted')
+            .snapshots()) {
+      // Filter swap offers where current user is sender or recipient
+      final mySwapOffers = swapSnapshot.docs
+          .where((doc) {
+            final data = doc.data();
+            return data['senderId'] == user.uid ||
+                data['recipientId'] == user.uid;
+          })
+          .map((doc) => doc.id)
+          .toList();
+
+      if (mySwapOffers.isEmpty) {
+        yield 0;
+        continue;
+      }
+
+      // Get unread messages for these swap offers
+      final messagesSnapshot = await _messagesCollection
+          .where('swapOfferId', whereIn: mySwapOffers)
+          .where('senderId', isNotEqualTo: user.uid)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      yield messagesSnapshot.docs.length;
+    }
   }
 
   // Deleting all messages that have been swapped

@@ -275,7 +275,6 @@ class _PostBookScreenState extends State<PostBookScreen> {
       }
 
       // Add book to Firestore with image URL (base64 or placeholder)
-      print('📚 Adding book to Firestore...');
       await _firestoreService.addBook(
         title: _titleController.text.trim(),
         author: _authorController.text.trim(),
@@ -283,7 +282,6 @@ class _PostBookScreenState extends State<PostBookScreen> {
         swapFor: _swapForController.text.trim(),
         imageUrl: imageUrl,
       );
-      print('✅ Book added successfully!');
 
       // Step 3: Show success and go back
       if (mounted) {
@@ -296,7 +294,6 @@ class _PostBookScreenState extends State<PostBookScreen> {
         Navigator.pop(context); // Go back to previous screen
       }
     } catch (e) {
-      print('❌ Error posting book: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -510,7 +507,7 @@ class _PostBookScreenState extends State<PostBookScreen> {
 
                     // Condition dropdown
                     DropdownButtonFormField<String>(
-                      value: _selectedCondition,
+                      initialValue: _selectedCondition,
                       decoration: const InputDecoration(
                         labelText: 'Condition',
                         border: OutlineInputBorder(),

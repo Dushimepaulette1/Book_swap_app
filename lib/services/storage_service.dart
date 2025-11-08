@@ -28,7 +28,7 @@ class StorageService {
 
       // Create unique filename using timestamp
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'book_${timestamp}.jpg';
+      final fileName = 'book_$timestamp.jpg';
 
       // Create reference to storage location
       // Path structure: books/userId/filename
@@ -37,8 +37,6 @@ class StorageService {
           .child('books')
           .child(user.uid)
           .child(fileName);
-
-      print('📤 Uploading to: books/${user.uid}/$fileName');
 
       // Upload the file
       // UploadTask tracks upload progress
@@ -50,8 +48,6 @@ class StorageService {
       // Get the download URL
       // This is the URL we'll save in Firestore
       final String downloadUrl = await snapshot.ref.getDownloadURL();
-
-      print('✅ Upload successful: $downloadUrl');
 
       return downloadUrl;
     } on FirebaseException catch (e) {
@@ -87,20 +83,19 @@ class StorageService {
       await storageRef.delete();
     } catch (e) {
       // Log error but don't throw - image might already be deleted
-      print('Error deleting image: $e');
     }
   }
 
   /// Upload image with progress tracking
   ///
   /// Same as uploadBookImage but provides upload progress
-  /// Returns a Stream<double> with progress (0.0 to 1.0)
+  /// Returns a Stream of double with progress (0.0 to 1.0)
   Stream<double> uploadBookImageWithProgress(File imageFile) {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not logged in');
 
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName = 'book_${timestamp}.jpg';
+    final fileName = 'book_$timestamp.jpg';
 
     final Reference storageRef = _storage
         .ref()

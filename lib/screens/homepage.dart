@@ -76,16 +76,14 @@ class _HomepageState extends State<Homepage> {
             label: 'My Listings',
           ),
           BottomNavigationBarItem(
-            icon: Consumer2<SwapProvider, ChatProvider>(
-              builder: (context, swapProvider, chatProvider, child) {
-                final totalCount =
-                    swapProvider.pendingOffersCount +
-                    chatProvider.totalUnreadCount;
+            icon: Consumer<SwapProvider>(
+              builder: (context, swapProvider, child) {
+                final pending = swapProvider.pendingOffersCount;
                 return Stack(
                   clipBehavior: Clip.none,
                   children: [
                     const Icon(Icons.swap_horiz),
-                    if (totalCount > 0)
+                    if (pending > 0)
                       Positioned(
                         right: -6,
                         top: -6,
@@ -100,7 +98,7 @@ class _HomepageState extends State<Homepage> {
                             minHeight: 16,
                           ),
                           child: Text(
-                            '$totalCount',
+                            '$pending',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -848,7 +846,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Push Notifications'),
             subtitle: const Text('Receive notifications about swap offers'),
             value: _notificationsEnabled,
-            activeColor: const Color(0xFFF5C344),
+            activeTrackColor: const Color(0xFFF5C344),
             onChanged: _isLoading ? null : _saveNotificationPreference,
           ),
 
@@ -856,7 +854,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Email Updates'),
             subtitle: const Text('Receive email about swap offers'),
             value: _emailUpdatesEnabled,
-            activeColor: const Color(0xFFF5C344),
+            activeTrackColor: const Color(0xFFF5C344),
             onChanged: _isLoading ? null : _saveEmailUpdatesPreference,
           ),
 
@@ -925,14 +923,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 );
 
-                if (shouldLogout == true && mounted) {
+                if (shouldLogout == true) {
                   await _authService.signOut();
-                  if (mounted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                      (route) => false,
-                    );
-                  }
+                  if (!mounted) return;
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                    (route) => false,
+                  );
                 }
               },
               icon: const Icon(Icons.logout),

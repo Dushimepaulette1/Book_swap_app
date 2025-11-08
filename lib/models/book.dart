@@ -74,9 +74,9 @@ class Book {
       author: author ?? this.author,
       condition: condition ?? this.condition,
       swapFor: swapFor ?? this.swapFor,
-      ownerId: this.ownerId,
-      ownerEmail: this.ownerEmail,
-      createdAt: this.createdAt,
+      ownerId: ownerId,
+      ownerEmail: ownerEmail,
+      createdAt: createdAt,
       status: status ?? this.status,
       imageUrl: imageUrl ?? this.imageUrl,
     );

@@ -141,7 +141,7 @@ class BookDetailsScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5C344).withOpacity(0.1),
+                      color: const Color(0xFFF5C344).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: const Color(0xFFF5C344),
@@ -221,7 +221,7 @@ class BookDetailsScreen extends StatelessWidget {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -485,12 +485,12 @@ class BookDetailsScreen extends StatelessWidget {
   void _showDeleteConfirmation(BuildContext context, Book book) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Book'),
         content: Text('Are you sure you want to delete "${book.title}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -499,25 +499,30 @@ class BookDetailsScreen extends StatelessWidget {
                 // Deleting from Firestore
                 await FirestoreService().deleteBook(book.id);
 
-                if (context.mounted) {
-                  Navigator.pop(context); // Closing dialog
-                  Navigator.pop(context); // Going back to previous screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Book deleted successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext); // Close dialog
+                  // Try to pop the details screen if possible, but avoid popping to root
+                  await Navigator.of(context).maybePop();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Book deleted successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
                 }
               } catch (e) {
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to delete: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               }
             },
