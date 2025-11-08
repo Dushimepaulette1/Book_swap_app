@@ -4,8 +4,6 @@
 
 BookSwap is a mobile application that allows users to list, browse, and exchange books with other users through an intuitive swapping system. Built with Flutter and Firebase, it provides real-time chat, swap offer management, and notification badges.
 
----
-
 ## Features
 
 ### Core Features
@@ -29,16 +27,6 @@ BookSwap is a mobile application that allows users to list, browse, and exchange
   - Notification toggle (email/push notifications)
   - Account management
   - Sign out functionality
-
----
-
-## Architecture
-
-> **Note:** Create a `docs/images/` folder in your project root and add these diagrams:
->
-> - `architecture-diagram.png` - Full system architecture
-> - `database-erd.png` - Entity relationship diagram
-> - `state-management-diagram.png` - State flow visualization
 
 ### Project Structure
 
@@ -80,8 +68,6 @@ lib/
 ![Architecture Diagram](./docs/images/architecture-diagram.png)
 
 _The app follows a clean layered architecture: screens talk to providers, providers use services, and services connect to Firebase._
-
----
 
 ## Database Schema
 
@@ -145,8 +131,6 @@ Storing conversations between users:
 }
 ```
 
----
-
 ## State Management
 
 ### Provider Pattern
@@ -201,8 +185,6 @@ await bookProvider.fetchBooks(); // Calling methods
 
 final books = context.watch<BookProvider>().books; // Getting data
 ```
-
----
 
 ## Getting Started
 
@@ -356,8 +338,6 @@ flutter build apk --release
 
 APK location: `build/app/outputs/flutter-apk/app-release.apk`
 
----
-
 ## Dependencies
 
 ```yaml
@@ -379,8 +359,6 @@ dependencies:
   image_picker: ^1.0.7
   image: ^4.1.6
 ```
-
----
 
 ## Key Features Implementation
 
@@ -423,8 +401,6 @@ Keeping track of what's new:
 - **Unread messages** - Counting messages where `read == false`
 - **Pending offers** - Counting offers where `status == 'pending'`
 - Both update automatically through Provider
-
----
 
 ## Design Decisions & Trade-offs
 
@@ -492,8 +468,6 @@ Keeping track of what's new:
 
 **Why this choice:** Keeps one-on-one chats simple without overcomplicating things.
 
----
-
 ## Testing
 
 ### Run Unit Tests
@@ -508,8 +482,6 @@ flutter test
 flutter test test/widget_test.dart
 ```
 
----
-
 ## Known Issues
 
 1. **Analyzer warnings** - Two info-level warnings about using `BuildContext` after async operations. These are common in Flutter apps and don't break anything.
@@ -517,8 +489,6 @@ flutter test test/widget_test.dart
 2. **Email verification** - Users could technically bypass the email check by refreshing. In production, you'd want server-side verification.
 
 3. **Image loading** - Large images might take a moment to process. Could add loading indicators for better feedback.
-
----
 
 ## Future Enhancements
 
@@ -530,8 +500,6 @@ flutter test test/widget_test.dart
 - [ ] Wishlist and favorite books
 - [ ] Swap history and analytics
 
----
-
 ## Author
 
 **Student**: [Your Name]  
@@ -539,13 +507,9 @@ flutter test test/widget_test.dart
 **University**: [University Name]  
 **Semester**: [Semester/Year]
 
----
-
 ## Contact
 
 For questions or issues, please contact: [your.email@university.edu]
-
----
 
 ## Acknowledgments
 
