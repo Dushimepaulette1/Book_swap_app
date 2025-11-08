@@ -502,14 +502,7 @@ flutter test test/widget_test.dart
 
 ## Author
 
-**Student**: [Your Name]  
-**Course**: [Course Code - Course Name]  
-**University**: [University Name]  
-**Semester**: [Semester/Year]
-
-## Contact
-
-For questions or issues, please contact: [your.email@university.edu]
+**Student**: Dushime Paulette
 
 ## Acknowledgments
 
