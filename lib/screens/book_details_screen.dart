@@ -499,30 +499,33 @@ class BookDetailsScreen extends StatelessWidget {
                 // Deleting from Firestore
                 await FirestoreService().deleteBook(book.id);
 
+                // Close the dialog first
                 if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext); // Close dialog
-                  // Try to pop the details screen if possible, but avoid popping to root
-                  await Navigator.of(context).maybePop();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Book deleted successfully'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
+                  Navigator.pop(dialogContext);
+                }
+
+                // Then pop the details screen back to previous screen
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  // Show success message on the previous screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Book deleted successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                 }
               } catch (e) {
                 if (dialogContext.mounted) {
                   Navigator.pop(dialogContext);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Failed to delete: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
+                }
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               }
             },
